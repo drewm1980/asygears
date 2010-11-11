@@ -1,3 +1,5 @@
+import math;
+
 // internal gear
 bool internal = false;
 
@@ -41,6 +43,54 @@ pair frompolar(real r, real theta){
 	return r*(cos(theta),sin(theta));
 }
 
+// Compute point on the involute of a unit circle parameterized by angle phi
+// For reference, this can be found on mathworld.wolfram.com/CircleInvolute.html
+pair involute(real phi)
+{
+	real cphi = cos(phi);
+	real sphi = sin(phi);
+	return (cphi + phi*sphi, sphi - phi*cphi);
+}
+// Compute point on the involute of a unit circle parameterized by alpha
+// For reference, this can be found on en.wikipedia.org/wiki/involute
+pair involute_polar(real alpha)
+{
+	real r = sec(alpha); 
+	real theta = tan(alpha) - alpha;
+	return r*(cos(theta),sin(theta));
+}
+// Use the alpha parameterization to find the intersection of
+// the involute of a unit circle with a larger circle of radius r
+pair involute_intersect_with_r(real r)
+{
+	// r = sec(alpha) = 1/cos(alpha)
+	// 1/r = cos(alpha)
+	// alpha = acos(1/r)
+	assert(r>0,"r must be strictly positive!");
+	real alpha = acos(1/r);
+	assert(abs(cos(alpha)-1)/r<.00001, "Error this should be invertible");
+	real theta = tan(alpha) - alpha;
+	return r*(cos(theta),sin(theta));
+}
+
+// Numerical approximation to the involute curve of a circle. 
+path involute_path(real r, real phi_start, real phi_stop, int segments)
+{
+	path outpath = frompolar(r, phi_start);
+
+
+	real deltaphi = (phi_stop - phi_start) / steps;
+	for(int i = 1; i<=steps; ++i)
+	{
+		real phi = phi_start + i*deltaphi;
+		pair s = frompolar(r,phi);
+		pair p = s + rotate(-90)*frompolar(r*i*deltaphi, phi);
+
+		outpath = outpath--p;
+	}
+	return outpath;
+}
+
 //// angles phi, phi_step in radians
 //void involute_intersect_with_r2(real r1, real r2, real phi, real phi_step)
 		//while(1)
@@ -60,34 +110,6 @@ pair frompolar(real r, real theta){
 			//phi = phi + phi_step
         //}
 
-path involute(real r, real phi_start, real phi_stop, int steps)
-{
-	//real ox = cos(phi_start) * r;
-	//real oy = sin(phi_start) * r;
-	path outpath = frompolar(r, phi_start);
-
-	//for i in range(1, steps+1)
-	real deltaphi = (phi_stop - phi_start) / steps;
-	for(int i = 1; i<=steps; ++i)
-	{
-		real phi = phi_start + i*deltaphi;
-
-		//sx = cos(phi) * r
-		//sy = sin(phi) * r
-		pair s = frompolar(r,phi);
-
-		//x = r * (phi - phi_start)
-		//px = sx + sin(phi) * x;
-		//py = sy - cos(phi) * x;
-		pair p = s + rotate(-90)*frompolar(r*i*deltaphi, phi);
-
-		//line(ox, oy, px, py)
-		//ox, oy = px, py
-		outpath = outpath--p;
-
-	}
-	return outpath;
-}
 
 if (internal)
 {

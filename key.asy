@@ -8,6 +8,7 @@ path slot(pair c1, pair c2, real r)
 	return p;
 };
 
+// Draw the origin
 unitsize(1inch);
 real crossSize = 1;
 draw((0,crossSize)--(0,-crossSize));
