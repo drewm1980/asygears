@@ -45,6 +45,8 @@ pair frompolar(real r, real theta){
 
 // Compute point on the involute of a unit circle parameterized by angle phi
 // For reference, this can be found on mathworld.wolfram.com/CircleInvolute.html
+// From Wolfram alpha, involute arc length function is phi^2/2
+//   phi is tangential angle.
 pair involute(real phi)
 {
 	real cphi = cos(phi);
@@ -90,6 +92,7 @@ path involute_path(real r, real phi_start, real phi_stop, int segments)
 	}
 	return outpath;
 }
+
 
 //// angles phi, phi_step in radians
 //void involute_intersect_with_r2(real r1, real r2, real phi, real phi_step)
