@@ -60,47 +60,71 @@ pair rotate_up_to_new_height(real h, pair p){
 	return (r*cos(theta),h);
 }
 
-path rotary_touchpoint(path previousTouchpoint, bool bottomKey=false){
-	pair prevUpperLeftCorner = (min(previousTouchpoint).x, max(previousTouchpoint).y);
-	real rFront = abs(prevUpperLeftCorner)-radialKeyGap;
+struct Touchpoint{
+	bool isFirst = false;
+	bool isLast = false;
+	int rowIndex;
+	pair bottomfront;
+	pair topfront;
+	pair topback;
+	pair bottomback;
+	path p;
+	
+	static Touchpoint Touchpoint(pair prevUpperLeftCorner, bool isFirst=true)
+	{
+		Touchpoint tp = new Touchpoint;
+		//pair prevUpperLeftCorner = previousTouchpoint.topback;
+		real rFront = abs(prevUpperLeftCorner)-radialKeyGap;
 
-	// Compute the top, front corner of the touchpoint
-	pair topfront = prevUpperLeftCorner - unit(prevUpperLeftCorner)*radialKeyGap;
-	topfront = rotate_up_to_new_height(prevUpperLeftCorner.y+depressedLedge, topfront);
-	topfront = rotate(keyTravelAngle)*topfront;
+		// Compute the top, front corner of the touchpoint
+		pair topfront = prevUpperLeftCorner - unit(prevUpperLeftCorner)*radialKeyGap;
+		topfront = rotate_up_to_new_height(prevUpperLeftCorner.y+depressedLedge, topfront);
+		topfront = rotate(keyTravelAngle)*topfront;
 
-	// The top, back corner of the touchpoint
-	pair topback = topfront - (touchpointLength, 0);
-	real rBack = abs(topback);
+		// The top, back corner of the touchpoint
+		pair topback = topfront - (touchpointLength, 0);
+		real rBack = abs(topback);
 
-	// The bottom, back corner of the touchpoint
-	pair bottomback = rotate(-keyTravelAngle)*topback;
-	bottomback = rotate(-degrees(sidewaysVisibilityTolerance/rBack))*bottomback;
+		// The bottom, back corner of the touchpoint
+		pair bottomback = rotate(-keyTravelAngle)*topback;
+		bottomback = rotate(-degrees(sidewaysVisibilityTolerance/rBack))*bottomback;
 
-	// The bottom, front of the touchpoint. 
-	// Needs to be low enough to not be visible when the row in front is depressed.
-	pair bottomfront = prevUpperLeftCorner - unit(prevUpperLeftCorner)*radialKeyGap;
-	if(bottomKey==false)	bottomfront = rotate(-keyTravelAngle)*bottomfront;
-	bottomfront = rotate(-degrees(frontbackVisibilityTolerance/rFront))*bottomfront;
+		// The bottom, front of the touchpoint. 
+		// Needs to be low enough to not be visible when the row in front is depressed.
+		pair bottomfront = prevUpperLeftCorner - unit(prevUpperLeftCorner)*radialKeyGap;
+		if(isFirst==false)	bottomfront = rotate(-keyTravelAngle)*bottomfront;
+		bottomfront = rotate(-degrees(frontbackVisibilityTolerance/rFront))*bottomfront;
 
-	// Construct the actual curve!
-	path p = arc((0,0),bottomfront,topfront,CCW)--arc((0,0),topback,bottomback,CW)--cycle;	
-	return p;
+		tp.isFirst = isFirst;
+		tp.bottomfront = bottomfront;
+		tp.topfront = topfront;
+		tp.topback = topback;
+		tp.bottomback = bottomback;
+		tp.p = arc((0,0),bottomfront,topfront,CCW)--arc((0,0),topback,bottomback,CW)--cycle;	
+		return tp;
+	}
+
+	static Touchpoint Touchpoint(Touchpoint previousTouchpoint)
+	{
+		Touchpoint tp = Touchpoint(previousTouchpoint.topback, isFirst=false);	
+		return tp;
+	}
 }
+from Touchpoint unravel Touchpoint;
 	
 //--------------------------Generate all paths, no duplication-------------------------//
-path[] touchpointProfiles;
-touchpointProfiles[0] = rotary_touchpoint(touchpointStart, true);
+Touchpoint[] touchpoints;
+touchpoints[0] = Touchpoint(touchpointStart);
 for(int i=1; i<rowCount; ++i)
 {
-	touchpointProfiles[i] = rotary_touchpoint(touchpointProfiles[i-1]);
+	touchpoints[i] = Touchpoint(touchpoints[i-1]);
 }
 
 //--------------------------Drawing, with duplication of replicate parts-------------------------//
 fill(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
 
-for(path p:touchpointProfiles)
+for(Touchpoint t:touchpoints)
 {
-	fill(p);
+	fill(t.p);
 }
 
