@@ -6,8 +6,6 @@ unitsize(1inch);
 real averageFingerLength = 4; // Fingers straight out, knuckle to fingertips, not including thumb.
 real comfortableKeySpan = 7; // Splay your fingers, measure distance from Pinkytip to Thumbtip. 
 real fingerWidth = 5/8; // The width of your middle fingertip
-//real forearmLength = 13; // Center of elbow to knuckles
-//real eyeHeight = 23; // Bottom of elbow held at side to eye level
 
 // Keyboard Construction Parameters
 real keyboardDepth= 18; // Make larger for more uniform key travel, but deeper keyboard
@@ -15,7 +13,7 @@ real mainShaftDiameter = .24;
 real mainBearingDiameter = 0.5;
 real mainShaftSurroundingMaterialThickness = 3/8;  // Make larger for more material around bearing.
 real caseThickness = 0.25;
-real radialKeyGap = .03; // If the adjacent keys rub front-back, increase this number.
+real radialKeyGap = .05; // If the adjacent keys rub front-back, increase this number.
 real bottomTouchpointHeight = 0; // Height of bottom touchpoint relative to rotation axis.
 
 //--------------------------Derived Parameters-------------------------//
@@ -54,13 +52,6 @@ path slot(pair c1, pair c2, real r)
 	return p;
 };
 
-//// Move a point p left horizontally until it hits the right side of a circle of radius r
-//pair move_in_horizontally(real r, pair p){
-	//pair[] l = intersectionpoints((0,p.y)--p, r*unitcircle());
-	//assert(l.length==1, "Radius Cannot Be Achieved; Try Lower Key Travel");
-	//return l[0];
-//}
-
 pair rotate_up_to_new_height(real h, pair p){
 	assert(p.y<h, "Height Cannot Be Achieved; Keyboard it probably silly tall; Try Lower Key Travel");
 	real r = abs(p);
@@ -77,8 +68,6 @@ path rotary_touchpoint(path previousTouchpoint, bool bottomKey=false){
 	pair topfront = prevUpperLeftCorner - unit(prevUpperLeftCorner)*radialKeyGap;
 	topfront = rotate_up_to_new_height(prevUpperLeftCorner.y+depressedLedge, topfront);
 	topfront = rotate(keyTravelAngle)*topfront;
-	//assert(rFront>0, "Rearmost key went beyond rotation axis; try increasing keyboard size");
-	//pair topfront = move_in_horizontally(rFront, prevUpperLeftCorner);
 
 	// The top, back corner of the touchpoint
 	pair topback = topfront - (touchpointLength, 0);
@@ -94,11 +83,6 @@ path rotary_touchpoint(path previousTouchpoint, bool bottomKey=false){
 	if(bottomKey==false)	bottomfront = rotate(-keyTravelAngle)*bottomfront;
 	bottomfront = rotate(-degrees(frontbackVisibilityTolerance/rFront))*bottomfront;
 
-	//dot(topfront,red);	
-	//dot(bottomfront,red);	
-	//dot(topback,red);	
-	//dot(bottomback,red);	
-
 	// Construct the actual curve!
 	path p = arc((0,0),bottomfront,topfront,CCW)--arc((0,0),topback,bottomback,CW)--cycle;	
 	return p;
@@ -111,12 +95,12 @@ for(int i=1; i<rowCount; ++i)
 {
 	touchpointProfiles[i] = rotary_touchpoint(touchpointProfiles[i-1]);
 }
-//--------------------------Drawing, with duplication of replicate parts-------------------------//
 
-draw(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
+//--------------------------Drawing, with duplication of replicate parts-------------------------//
+fill(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
 
 for(path p:touchpointProfiles)
 {
-	draw(p);
+	fill(p);
 }
 
