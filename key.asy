@@ -63,6 +63,7 @@ pair rotate_up_to_new_height(real h, pair p){
 struct Touchpoint{
 	bool isFirst = false;
 	bool isLast = false;
+	bool isOdd;
 	int rowIndex;
 	pair bottomfront;
 	pair topfront;
@@ -95,6 +96,9 @@ struct Touchpoint{
 		if(isFirst==false)	bottomfront = rotate(-keyTravelAngle)*bottomfront;
 		bottomfront = rotate(-degrees(frontbackVisibilityTolerance/rFront))*bottomfront;
 
+		if(isFirst==true) tp.rowIndex=1;
+		if(isFirst==true) tp.isOdd=true;
+	
 		tp.isFirst = isFirst;
 		tp.bottomfront = bottomfront;
 		tp.topfront = topfront;
@@ -107,10 +111,32 @@ struct Touchpoint{
 	static Touchpoint Touchpoint(Touchpoint previousTouchpoint)
 	{
 		Touchpoint tp = Touchpoint(previousTouchpoint.topback, isFirst=false);	
+		tp.rowIndex = previousTouchpoint.rowIndex + 1;
+		tp.isOdd = !previousTouchpoints.isOdd;
 		return tp;
 	}
 }
 from Touchpoint unravel Touchpoint;
+
+struct Body
+{
+	bool useOddRows;
+	path p;
+	void operator init(Touchpoint[] tps, bool useOddRows)
+	{
+		path p;
+		for(Touchpoint tp:tps)
+		{
+			if(useOddRows==tp.isOdd)
+			{
+				p = tp.topfront--tp.topback;
+		}
+		this.p = p;
+		this.useOddRows = useOddRows;	
+	}
+
+
+}
 	
 //--------------------------Generate all paths, no duplication-------------------------//
 Touchpoint[] touchpoints;
