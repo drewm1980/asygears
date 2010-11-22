@@ -112,7 +112,7 @@ struct Touchpoint{
 	{
 		Touchpoint tp = Touchpoint(previousTouchpoint.topback, isFirst=false);	
 		tp.rowIndex = previousTouchpoint.rowIndex + 1;
-		tp.isOdd = !previousTouchpoints.isOdd;
+		tp.isOdd = !previousTouchpoint.isOdd;
 		return tp;
 	}
 }
@@ -130,6 +130,7 @@ struct Body
 			if(useOddRows==tp.isOdd)
 			{
 				p = tp.topfront--tp.topback;
+			}
 		}
 		this.p = p;
 		this.useOddRows = useOddRows;	
