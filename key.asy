@@ -1,5 +1,8 @@
 //--------------------------Unit Specific, User Tunable Parameters-------------------------//
 unitsize(1inch);
+real paperwidth=24inches;
+real paperheight=12inches;
+size(paperwidth,paperheight,IgnoreAspect);
 
 // Biological data for user, in decreasing order of importance
 // Default values are taken from Drew Wagner's hands.
@@ -226,8 +229,7 @@ struct Body
 		path commonPath;
 		commonPath = keysPathEnd--(0,0)--keysPathStart;
 
-		this.oddPath = oddPath;
-		this.evenPath = evenPath--commonPath;
+		this.oddPath = oddPath--commonPath;
 		this.evenPath = evenPath--commonPath;
 	}
 }
@@ -243,13 +245,21 @@ for(int i=1; i<rowCount; ++i)
 Body body = Body(touchpoints);
 
 //--------------------------Drawing, with duplication of replicate parts-------------------------//
-fill(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
+//fill(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
+//for(Touchpoint t:touchpoints)
+//{
+	//fill(t.p);
+//}
+//draw(body.evenPath, green+linewidth(.008inches));
+//draw(body.oddPath, blue+linewidth(.004inches));
+
+pen cutpen = black+linewidth(.001inches);
+draw(scale(mainShaftDiameter)*unitcircle,cutpen); // The axis of rotation
+draw(scale(mainShaftDiameter/2)*unitcircle,cutpen); // The axis of rotation
 for(Touchpoint t:touchpoints)
 {
-	fill(t.p);
+	draw(t.p, cutpen);
 }
-draw(body.evenPath, green+linewidth(.008inches));
-draw(body.oddPath, blue+linewidth(.004inches));
-
-
+draw(body.evenPath,cutpen);
+draw(body.oddPath, cutpen);
 
