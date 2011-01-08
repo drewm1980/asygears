@@ -59,7 +59,7 @@ path slot(pair c1, pair c2, real r)
 };
 
 pair rotate_up_to_new_height(real h, pair p){
-	assert(p.y<h, "Height Cannot Be Achieved; Keyboard it probably silly tall; Try Lower Key Travel");
+	assert(p.y<h, "Height Cannot Be Achieved; Keyboard is probably silly tall; Try Lower Key Travel");
 	real r = abs(p);
 	// r*sin(theta)=h
 	real theta = asin(h/r);
@@ -115,14 +115,19 @@ struct Touchpoint{
 from Touchpoint unravel Touchpoint;
 
 path arc_with_radius(pair a, pair b, real r){
-	// If the requested r is too small to be achieveable, just return a line.
-	if(r<abs(b-a)/2){
-		return a--b;
-	}
+	assert(r>abs(b-a)/2, "Requested r is too small to be achievable");
 	pair mp = (a+b)/2;
 	real h = sqrt(r^2 - abs(mp-a)^2);
 	pair center = rotate(90)*unit(b-a)*h + mp;
 	return arc(center, a, b, CCW);
+}
+
+// Use Thales' theorem to find the two tangents from a point to a circle.
+pair[] tangents_to_circle(pair c, real r, pair p){
+	assert(abs(p-c)>r, "point p must be outside the circle!");
+	path temp = circle((p-c)/2, abs((p-c)/2));
+	pair[] intersections = intersectionpoints(circle(c,r), temp);
+	return intersections;
 }
 
 struct Body
@@ -130,6 +135,9 @@ struct Body
 	// Row indexing is zero-based, starting at lowest row.
 	path oddPath; 
 	path evenPath; 
+	// The path for the key, including cutouts.
+	path[] oddPathFinal;
+	path[] evenPathFinal;
 	void operator init(Touchpoint[] tps)
 	{
 		path oddPath; 
@@ -181,11 +189,11 @@ struct Body
 
 			if(i%2==0) 
 			{
-				evenPath = evenPath--top;
-				oddPath = oddPath--cutout;
+				evenPath = evenPath & top;
+				oddPath = oddPath & cutout;
 			}else{
-				evenPath = evenPath--cutout;
-				oddPath = oddPath--top;
+				evenPath = evenPath & cutout;
+				oddPath = oddPath & top;
 			}
 		}
 
@@ -210,7 +218,7 @@ struct Body
 			p2 = intersectionpoint(p2--p3, circle((0,0),rBelow));
 			p3 = intersectionpoint(p2--p3, circle((0,0),r));
 			path cutout = arc((0,0),p1,p2,CW)--p3;
-			pair keysPathEnd= p3;
+			keysPathEnd= p3;
 
 			//... or we need the top and back of the current touchpoint.
 			path top = tp.topfront--arc((0,0),tp.topback,keysPathEnd,CW);
@@ -227,12 +235,23 @@ struct Body
 		
 		// The rest of the body of the key, common to both parts.
 		path commonPath;
-		commonPath = keysPathEnd--(0,0)--keysPathStart;
+		pair tangent1 = tangents_to_circle((0,0), mainShaftDiameter, keysPathEnd)[0];
+		pair tangent2 = tangents_to_circle((0,0), mainShaftDiameter/2 + mainShaftDiameter/2, keysPathStart)[1];
+		commonPath = keysPathEnd--arc((0,0),tangent1,tangent2,CCW)--keysPathStart;
+		oddPath = oddPath & commonPath & cycle;
+		evenPath = evenPath & commonPath & cycle;
 
-		this.oddPath = oddPath--commonPath;
-		this.evenPath = evenPath--commonPath;
+		this.oddPath = oddPath;
+		this.evenPath = evenPath;
+
+		// The hole for the bearing.
+		path hole = scale(mainShaftDiameter/2)*unitcircle;
+
+		this.oddPathFinal = oddPath^^hole;
+		this.evenPathFinal = evenPath^^hole;
 	}
 }
+from Body unravel Body;
 	
 //--------------------------Generate all paths, no duplication-------------------------//
 Touchpoint[] touchpoints;
@@ -241,25 +260,17 @@ for(int i=1; i<rowCount; ++i)
 {
 	touchpoints[i] = Touchpoint(touchpoints[i-1]);
 }
-
 Body body = Body(touchpoints);
 
 //--------------------------Drawing, with duplication of replicate parts-------------------------//
-//fill(scale(mainShaftDiameter/2)*unitcircle); // The axis of rotation
-//for(Touchpoint t:touchpoints)
-//{
-	//fill(t.p);
-//}
-//draw(body.evenPath, green+linewidth(.008inches));
-//draw(body.oddPath, blue+linewidth(.004inches));
 
 pen cutpen = black+linewidth(.001inches);
-draw(scale(mainShaftDiameter)*unitcircle,cutpen); // The axis of rotation
-draw(scale(mainShaftDiameter/2)*unitcircle,cutpen); // The axis of rotation
+pen fillpen = evenodd + 0.8*white;
+
 for(Touchpoint t:touchpoints)
 {
-	draw(t.p, cutpen);
+	filldraw(shift((0,2.5))*t.p, fillpen, cutpen);
 }
-draw(body.evenPath,cutpen);
-draw(body.oddPath, cutpen);
+filldraw(shift((0,0))*body.evenPathFinal,fillpen,cutpen);
+filldraw(shift((0,-5))*body.oddPathFinal,fillpen,cutpen);
 
